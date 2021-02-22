@@ -1,5 +1,6 @@
 import pygame
 from math import sqrt
+from random import randint
 
 
 class Scene:
@@ -13,7 +14,9 @@ class Scene:
         pygame.init()
 
     def __add_walls(self):
-        self.walls.append(Wall(self.screen, (300, 100), (400, 100)))
+        def r(): return randint(0, 500)
+        for _ in range(0, 5):
+            self.walls.append(Wall(self.screen, (r(), r()), (r(), r())))
 
     def draw(self):
         RUNNING = True
@@ -22,13 +25,13 @@ class Scene:
             for event in pygame.event.get():
                 if event == pygame.QUIT:
                     RUNNING = False
+            self.ray.lookAt(pygame.mouse.get_pos())
             for wall in self.walls:
                 wall.draw()
-            self.ray.lookAt(pygame.mouse.get_pos())
-            if self.ray.intersect(self.walls[0]):
-                self.ray.color = (255, 0, 0)
-            else:
-                self.ray.color = (255, 255, 255)
+                point = self.ray.cast(wall)
+                if point != None:
+                    pygame.draw.circle(self.screen, (255, 255, 255), point, 5)
+
             self.ray.draw()
             pygame.display.update()
 
@@ -44,7 +47,7 @@ class Wall:
 
     def draw(self):
         pygame.draw.line(self.screen, (255, 255, 255),
-                         (self.x1, self.y1), (self.x2, self.y2))
+                         (self.x1, self.y1), (self.x2, self.y2), 3)
 
 
 class Source:
@@ -69,13 +72,14 @@ class Ray:
         x = pos[0]
         y = pos[1]
 
-        V = sqrt(x**2 + y**2)
+        V = int(sqrt(x**2 + y**2))
         V = 1
         if V > 0:
-            self.x2 = (self.x1 + (x - self.x1) / V)
-            self.y2 = (self.y1 + (y - self.y1) / V)
+            self.x2 = (self.x1 + (x - self.x1) // V)
+            self.y2 = (self.y1 + (y - self.y1) // V)
+            print(f"** DEBUG: ray: {(self.x1,self.y1,self.x2,self.y2)}")
 
-    def intersect(self, wall):
+    def cast(self, wall):
         x1 = self.x1
         y1 = self.y1
         x2 = self.x2
@@ -85,12 +89,17 @@ class Ray:
         x4 = wall.x2
         y4 = wall.y2
 
+        point = None
+
         denom = ((x1-x2)*(y3-y4)) - ((y1-y2)*(x3-x4))
 
         if denom == 0:
-            return False
+            return point
 
         u = (((x1-x3)*(y3-y4))-((y1-y3)*(x3-x4)))/denom
         t = (((x2-x1)*(y1-y3))-((y2-y1)*(x1-x3)))/denom
 
-        return t >= 0 and t <= 1 and u >= 0
+        if t >= 0 and t <= 1 and u >= 0:
+            point = (x1 + u*(x2-x1), y1 + u*(y2-y1))
+
+        return point
