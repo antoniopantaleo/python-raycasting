@@ -1,5 +1,5 @@
 import pygame
-from math import sqrt
+from math import sqrt, cos, sin, pi
 from random import randint
 
 
@@ -9,8 +9,9 @@ class Scene:
         self.background = (30, 30, 30)
         self.screen = pygame.display.set_mode((size, size))
         self.walls = []
-        self.__add_walls()
-        self.ray = Ray(self.screen, (100, 250), (0, -100))
+        # self.__add_walls()
+        # self.ray = Ray(self.screen, pos=(100, 250), dir=(0, -100))
+        self.source = Source(self.screen, (250, 250))
         pygame.init()
 
     def __add_walls(self):
@@ -25,14 +26,16 @@ class Scene:
             for event in pygame.event.get():
                 if event == pygame.QUIT:
                     RUNNING = False
-            self.ray.lookAt(pygame.mouse.get_pos())
+            # self.ray.lookAt(pygame.mouse.get_pos())
+            self.source.center = pygame.mouse.get_pos()
+            self.source.draw()
             for wall in self.walls:
                 wall.draw()
-                point = self.ray.cast(wall)
-                if point != None:
-                    pygame.draw.circle(self.screen, (255, 255, 255), point, 5)
+                # point = self.ray.cast(wall)
+                # if point != None:
+                #   pygame.draw.circle(self.screen, (255, 255, 255), point, 5)
 
-            self.ray.draw()
+            # self.ray.draw()
             pygame.display.update()
 
 
@@ -50,18 +53,24 @@ class Wall:
                          (self.x1, self.y1), (self.x2, self.y2), 3)
 
 
-class Source:
-    pass
-
-
 class Ray:
 
+    '''
     def __init__(self, screen, pos, dir):
         self.screen = screen
         self.x1 = pos[0]
         self.y1 = pos[1]
         self.x2 = self.x1 + dir[0]
         self.y2 = self.y1 + dir[1]
+        self.color = (255, 255, 255)
+    '''
+
+    def __init__(self, screen, pos, angle):
+        self.screen = screen
+        self.x1 = pos[0]
+        self.y1 = pos[1]
+        self.x2 = 10*(250+cos(angle))
+        self.y2 = 10*(250+sin(angle))
         self.color = (255, 255, 255)
 
     def draw(self):
@@ -103,3 +112,17 @@ class Ray:
             point = (x1 + u*(x2-x1), y1 + u*(y2-y1))
 
         return point
+
+
+class Source:
+
+    def __init__(self, screen, center):
+        self.screen = screen
+        self.center = center
+        self.rays = []
+
+    def draw(self):
+        pygame.draw.circle(self.screen, (255, 255, 255), self.center, 6)
+        for a in range(0, 360, 180):
+            ray = Ray(self.screen, self.center, 2*a)
+            ray.draw()
