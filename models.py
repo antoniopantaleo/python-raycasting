@@ -9,12 +9,11 @@ class Scene:
         self.screen = pygame.display.set_mode((size, size))
         self.walls = []
         self.__add_walls()
-        self.ray = Ray(self.screen, (250, 250), (0, -100))
+        self.ray = Ray(self.screen, (100, 250), (0, -100))
         pygame.init()
 
     def __add_walls(self):
-        #self.walls.append(Wall(self.screen, (300, 100), (400, 100)))
-        pass
+        self.walls.append(Wall(self.screen, (300, 100), (400, 100)))
 
     def draw(self):
         RUNNING = True
@@ -23,7 +22,13 @@ class Scene:
             for event in pygame.event.get():
                 if event == pygame.QUIT:
                     RUNNING = False
+            for wall in self.walls:
+                wall.draw()
             self.ray.lookAt(pygame.mouse.get_pos())
+            if self.ray.intersect(self.walls[0]):
+                self.ray.color = (255, 0, 0)
+            else:
+                self.ray.color = (255, 255, 255)
             self.ray.draw()
             pygame.display.update()
 
@@ -54,9 +59,10 @@ class Ray:
         self.y1 = pos[1]
         self.x2 = self.x1 + dir[0]
         self.y2 = self.y1 + dir[1]
+        self.color = (255, 255, 255)
 
     def draw(self):
-        pygame.draw.line(self.screen, (255, 255, 255),
+        pygame.draw.line(self.screen, self.color,
                          (self.x1, self.y1), (self.x2, self.y2))
 
     def lookAt(self, pos):
