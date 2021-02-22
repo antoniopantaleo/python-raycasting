@@ -27,7 +27,6 @@ class Scene:
                 if event == pygame.QUIT:
                     RUNNING = False
             # self.ray.lookAt(pygame.mouse.get_pos())
-            self.source.center = pygame.mouse.get_pos()
             self.source.draw()
             for wall in self.walls:
                 wall.draw()
@@ -121,8 +120,19 @@ class Source:
         self.center = center
         self.rays = []
 
+    @staticmethod
+    def rad2deg(rad):
+        return rad * pi / 180
+
+    def __init_rays(self):
+        for a in range(0, 360, 30):
+            a = Source.rad2deg(a)
+            x = self.center[0] + 100*cos(a)
+            y = self.center[1] + 100*sin(a)
+            self.rays.append(
+                Ray(self.screen(255, 255, 255), self.center, (x, y)))
+
     def draw(self):
         pygame.draw.circle(self.screen, (255, 255, 255), self.center, 6)
-        for a in range(0, 360, 180):
-            ray = Ray(self.screen, self.center, 2*a)
-            ray.draw()
+        for r in self.rays:
+            r.draw()
