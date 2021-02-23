@@ -8,6 +8,7 @@ class Scene:
     def __init__(self, size):
         self.background = (30, 30, 30)
         self.screen = pygame.display.set_mode((size+1, size+1))
+        pygame.display.set_caption("Ray Casting")
         self.size = size
         self.walls = []
         self.__add_walls()
@@ -16,7 +17,7 @@ class Scene:
 
     def __add_walls(self):
         def r(): return randint(0, self.size)
-        for _ in range(0, 3):
+        for _ in range(0, 4):
             self.walls.append(Wall(self.screen, (r(), r()), (r(), r())))
         # BOUNDS
         self.walls.append(Wall(self.screen, (0, 0), (0, self.size)))
@@ -32,7 +33,7 @@ class Scene:
         while RUNNING:
             self.screen.fill(self.background)
             for event in pygame.event.get():
-                if event == pygame.QUIT:
+                if event.type == pygame.QUIT:
                     RUNNING = False
             mouse_pos = pygame.mouse.get_pos()
             self.source.update(mouse_pos)
@@ -61,22 +62,22 @@ class Ray:
 
     def __init__(self, screen, pos, angle):
         self.screen = screen
-        self.x1 = pos[0]
-        self.y1 = pos[1]
         self.angle = angle
-        self.x2 = self.x1 + (1000*cos(angle))
-        self.y2 = self.y1 + (1000*sin(angle))
+        self.__set_pos(pos)
         self.color = (255, 255, 255)
 
     def update(self, pos):
+        self.__set_pos(pos)
+
+    def __set_pos(self, pos):
         self.x1 = pos[0]
         self.y1 = pos[1]
         self.x2 = self.x1 + (1000*cos(self.angle))
         self.y2 = self.y1 + (1000*sin(self.angle))
 
-    def draw(self):
+    def draw_until(self, point):
         pygame.draw.line(self.screen, self.color,
-                         (self.x1, self.y1), (self.x2, self.y2))
+                         (self.x1, self.y1), (point[0], point[1]))
 
     def cast(self, wall):
         x1 = self.x1
@@ -130,15 +131,14 @@ class Source:
     def draw(self, walls):
         for r in self.rays:
             point = None
-            dis = inf
+            distance = inf
             for wall in walls:
                 p = r.cast(wall)
                 if p != None:
                     curr_dist = sqrt(
                         (self.center[0]-p[0])**2+(self.center[1]-p[1])**2)
-                    if curr_dist < dis:
+                    if curr_dist < distance:
                         point = p
-                        dis = curr_dist
+                        distance = curr_dist
             if point != None:
-                pygame.draw.line(self.screen, (255, 255, 255),
-                                 self.center, point)
+                r.draw_until(point)
