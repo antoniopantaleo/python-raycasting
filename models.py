@@ -1,5 +1,5 @@
 import pygame
-from math import sqrt, cos, sin, pi
+from math import sqrt, cos, sin, pi, inf
 from random import randint
 
 
@@ -9,15 +9,20 @@ class Scene:
         self.background = (30, 30, 30)
         self.screen = pygame.display.set_mode((size, size))
         self.walls = []
-        # self.__add_walls()
-        # self.ray = Ray(self.screen, pos=(100, 250), dir=(0, -100))
-        self.source = Source(self.screen, (250, 250))
+        self.__add_walls()
+        self.source = Source(self.screen, (150, 250))
         pygame.init()
 
     def __add_walls(self):
         def r(): return randint(0, 500)
-        for _ in range(0, 5):
+        for _ in range(0, 3):
             self.walls.append(Wall(self.screen, (r(), r()), (r(), r())))
+        # BOUNDS
+        self.walls.append(Wall(self.screen, (0, 0), (0, 500)))
+        self.walls.append(Wall(self.screen, (0, 0), (500, 0)))
+        self.walls.append(Wall(self.screen, (500, 0), (500, 500)))
+        self.walls.append(Wall(self.screen, (0, 500), (500, 500)))
+        # ---
 
     def draw(self):
         RUNNING = True
@@ -26,15 +31,12 @@ class Scene:
             for event in pygame.event.get():
                 if event == pygame.QUIT:
                     RUNNING = False
-            # self.ray.lookAt(pygame.mouse.get_pos())
-            self.source.draw()
+            mouse_pos = pygame.mouse.get_pos()
+            self.source.update(mouse_pos)
             for wall in self.walls:
                 wall.draw()
-                # point = self.ray.cast(wall)
-                # if point != None:
-                #   pygame.draw.circle(self.screen, (255, 255, 255), point, 5)
+            self.source.draw(self.walls)
 
-            # self.ray.draw()
             pygame.display.update()
 
 
@@ -54,22 +56,12 @@ class Wall:
 
 class Ray:
 
-    '''
-    def __init__(self, screen, pos, dir):
-        self.screen = screen
-        self.x1 = pos[0]
-        self.y1 = pos[1]
-        self.x2 = self.x1 + dir[0]
-        self.y2 = self.y1 + dir[1]
-        self.color = (255, 255, 255)
-    '''
-
     def __init__(self, screen, pos, angle):
         self.screen = screen
         self.x1 = pos[0]
         self.y1 = pos[1]
-        self.x2 = 10*(250+cos(angle))
-        self.y2 = 10*(250+sin(angle))
+        self.x2 = self.x1 + (1000*cos(angle))
+        self.y2 = self.y1 + (1000*sin(angle))
         self.color = (255, 255, 255)
 
     def draw(self):
@@ -85,7 +77,6 @@ class Ray:
         if V > 0:
             self.x2 = (self.x1 + (x - self.x1) // V)
             self.y2 = (self.y1 + (y - self.y1) // V)
-            print(f"** DEBUG: ray: {(self.x1,self.y1,self.x2,self.y2)}")
 
     def cast(self, wall):
         x1 = self.x1
@@ -119,20 +110,35 @@ class Source:
         self.screen = screen
         self.center = center
         self.rays = []
+        self.__init_rays()
 
     @staticmethod
     def rad2deg(rad):
         return rad * pi / 180
 
     def __init_rays(self):
-        for a in range(0, 360, 30):
+        for a in range(0, 360, 3):
             a = Source.rad2deg(a)
-            x = self.center[0] + 100*cos(a)
-            y = self.center[1] + 100*sin(a)
             self.rays.append(
-                Ray(self.screen(255, 255, 255), self.center, (x, y)))
+                Ray(self.screen, self.center, a))
 
-    def draw(self):
-        pygame.draw.circle(self.screen, (255, 255, 255), self.center, 6)
+    def update(self, pos):
+        self.center = pos
+        self.rays = []
+        self.__init_rays()
+
+    def draw(self, walls):
         for r in self.rays:
-            r.draw()
+            point = None
+            dis = inf
+            for wall in walls:
+                p = r.cast(wall)
+                if p != None:
+                    curr_dist = sqrt(
+                        (self.center[0]-p[0])**2+(self.center[1]-p[1])**2)
+                    if curr_dist < dis:
+                        point = p
+                        dis = curr_dist
+            if point != None:
+                pygame.draw.line(self.screen, (255, 255, 255),
+                                 self.center, point)
