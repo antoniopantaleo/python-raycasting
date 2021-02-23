@@ -2,7 +2,7 @@ import pygame
 from models import Scene
 
 
-size = 501
+size = 550
 scene = Scene(size)
 
 if __name__ == "__main__":

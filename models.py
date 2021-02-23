@@ -7,22 +7,25 @@ class Scene:
 
     def __init__(self, size):
         self.background = (30, 30, 30)
-        self.screen = pygame.display.set_mode((size, size))
+        self.screen = pygame.display.set_mode((size+1, size+1))
+        self.size = size
         self.walls = []
         self.__add_walls()
         self.source = Source(self.screen, (150, 250))
         pygame.init()
 
     def __add_walls(self):
-        def r(): return randint(0, 500)
+        def r(): return randint(0, self.size)
         for _ in range(0, 3):
             self.walls.append(Wall(self.screen, (r(), r()), (r(), r())))
         # BOUNDS
-        self.walls.append(Wall(self.screen, (0, 0), (0, 500)))
-        self.walls.append(Wall(self.screen, (0, 0), (500, 0)))
-        self.walls.append(Wall(self.screen, (500, 0), (500, 500)))
-        self.walls.append(Wall(self.screen, (0, 500), (500, 500)))
-        # ---
+        self.walls.append(Wall(self.screen, (0, 0), (0, self.size)))
+        self.walls.append(Wall(self.screen, (0, 0), (self.size, 0)))
+        self.walls.append(
+            Wall(self.screen, (self.size, 0), (self.size, self.size)))
+        self.walls.append(
+            Wall(self.screen, (0, self.size), (self.size, self.size)))
+        # END BOUNDS
 
     def draw(self):
         RUNNING = True
@@ -60,23 +63,20 @@ class Ray:
         self.screen = screen
         self.x1 = pos[0]
         self.y1 = pos[1]
+        self.angle = angle
         self.x2 = self.x1 + (1000*cos(angle))
         self.y2 = self.y1 + (1000*sin(angle))
         self.color = (255, 255, 255)
 
+    def update(self, pos):
+        self.x1 = pos[0]
+        self.y1 = pos[1]
+        self.x2 = self.x1 + (1000*cos(self.angle))
+        self.y2 = self.y1 + (1000*sin(self.angle))
+
     def draw(self):
         pygame.draw.line(self.screen, self.color,
                          (self.x1, self.y1), (self.x2, self.y2))
-
-    def lookAt(self, pos):
-        x = pos[0]
-        y = pos[1]
-
-        V = int(sqrt(x**2 + y**2))
-        V = 1
-        if V > 0:
-            self.x2 = (self.x1 + (x - self.x1) // V)
-            self.y2 = (self.y1 + (y - self.y1) // V)
 
     def cast(self, wall):
         x1 = self.x1
@@ -124,8 +124,8 @@ class Source:
 
     def update(self, pos):
         self.center = pos
-        self.rays = []
-        self.__init_rays()
+        for ray in self.rays:
+            ray.update(pos)
 
     def draw(self, walls):
         for r in self.rays:
