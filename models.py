@@ -114,12 +114,12 @@ class Source:
         self.__init_rays()
 
     @staticmethod
-    def rad2deg(rad):
-        return rad * pi / 180
+    def deg2rad(deg):
+        return deg * pi / 180
 
     def __init_rays(self):
         for a in range(0, 360, 3):
-            a = Source.rad2deg(a)
+            a = Source.deg2rad(a)
             self.rays.append(
                 Ray(self.screen, self.center, a))
 
