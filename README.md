@@ -1,4 +1,4 @@
-# Python RayCasting
+# Python RayCasting
 
 Practicing raycasting with python and pygame.
 
