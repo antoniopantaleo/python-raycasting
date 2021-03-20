@@ -1,24 +1,20 @@
 import pygame
 from math import sqrt, cos, sin, pi, inf
-from random import randint
 
 
 class Scene:
 
-    def __init__(self, size):
+    def __init__(self, size, angle):
         self.background = (30, 30, 30)
         self.screen = pygame.display.set_mode((size+1, size+1))
         pygame.display.set_caption("Ray Casting")
         self.size = size
         self.walls = []
         self.__add_walls()
-        self.source = Source(self.screen, (150, 250))
+        self.source = Source(self.screen, (150, 250), angle)
         pygame.init()
 
     def __add_walls(self):
-        def r(): return randint(0, self.size)
-        for _ in range(0, 4):
-            self.walls.append(Wall(self.screen, (r(), r()), (r(), r())))
         # BOUNDS
         self.walls.append(Wall(self.screen, (0, 0), (0, self.size)))
         self.walls.append(Wall(self.screen, (0, 0), (self.size, 0)))
@@ -30,12 +26,22 @@ class Scene:
 
     def draw(self):
         RUNNING = True
+        new_wall = None
         while RUNNING:
             self.screen.fill(self.background)
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     RUNNING = False
+            pressed = pygame.mouse.get_pressed()[0]
             mouse_pos = pygame.mouse.get_pos()
+            if pressed and new_wall == None:
+                new_wall = Wall(self.screen, mouse_pos, mouse_pos)
+                self.walls.append(new_wall)
+            elif pressed and new_wall != None:
+                new_wall.x2 = mouse_pos[0]
+                new_wall.y2 = mouse_pos[1]
+            elif not pressed and new_wall != None:
+                new_wall = None
             self.source.update(mouse_pos)
             for wall in self.walls:
                 wall.draw()
@@ -107,9 +113,10 @@ class Ray:
 
 class Source:
 
-    def __init__(self, screen, center):
+    def __init__(self, screen, center, angle):
         self.screen = screen
         self.center = center
+        self.angle = angle
         self.rays = []
         self.__init_rays()
 
@@ -118,7 +125,7 @@ class Source:
         return deg * pi / 180
 
     def __init_rays(self):
-        for a in range(0, 360, 3):
+        for a in range(0, 360, self.angle):
             a = Source.deg2rad(a)
             self.rays.append(
                 Ray(self.screen, self.center, a))
