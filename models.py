@@ -34,13 +34,13 @@ class Scene:
                     RUNNING = False
             pressed = pygame.mouse.get_pressed()[0]
             mouse_pos = pygame.mouse.get_pos()
-            if pressed and new_wall == None:
+            if pressed and new_wall is None:
                 new_wall = Wall(self.screen, mouse_pos, mouse_pos)
                 self.walls.append(new_wall)
-            elif pressed and new_wall != None:
+            elif pressed and new_wall is not None:
                 new_wall.x2 = mouse_pos[0]
                 new_wall.y2 = mouse_pos[1]
-            elif not pressed and new_wall != None:
+            elif not pressed and new_wall is not None:
                 new_wall = None
             self.source.update(mouse_pos)
             for wall in self.walls:
@@ -141,11 +141,11 @@ class Source:
             distance = inf
             for wall in walls:
                 p = r.cast(wall)
-                if p != None:
+                if p is not None:
                     curr_dist = sqrt(
                         (self.center[0]-p[0])**2+(self.center[1]-p[1])**2)
                     if curr_dist < distance:
                         point = p
                         distance = curr_dist
-            if point != None:
+            if point is not None:
                 r.draw_until(point)
